@@ -14,7 +14,7 @@ Android Studio setup took a lot of time.  coding is a breeze.
 
 Walkthrough of all user stories:
 
-![Video Walkthrough](anim_rotten_tomatoes.gif)
+![Video Walkthrough](ToDo.gif)
 
 GIF created with [LiceCap](http://www.cockos.com/licecap/).
 
