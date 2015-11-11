@@ -1,5 +1,6 @@
 package com.example.chzheng.firsttodo;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -19,9 +20,10 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private ArrayList<String> items;
+    private List<String> items;
     private ArrayAdapter<String> itemsAdapter;
     private ListView lvItems;
     private EditText etEditText;
@@ -34,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         items = new ArrayList<String>();
-        readItems();
+        readItems(this);
 //        items.add("dog");
 //        items.add("cat");
 //        items.add("mosue");
@@ -50,9 +52,10 @@ public class MainActivity extends AppCompatActivity {
         lvItems.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                items.remove(position);
+                String item = items.remove(position);
                 itemsAdapter.notifyDataSetChanged();
-                writeItems();
+//                writeItems();
+                deleteItem(MainActivity.this, item);
                 return true;
             }
         });
@@ -85,20 +88,28 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == REQUST_CODE) {
             String item = data.getExtras().getString("item");
             int position = data.getExtras().getInt("position");
-            items.set(position, item);
-            itemsAdapter.notifyDataSetChanged();
-            writeItems();
+            String oldItem = items.get(position);
+            if (! oldItem.equals(item)) {
+                items.set(position, item);
+                itemsAdapter.notifyDataSetChanged();
+//            writeItems();
+                deleteItem(this, oldItem);
+                addOrUpdateItem(this, item);
+            }
         }
     }
 
-    private void readItems() {
-        File fileDir = getFilesDir();
-        File file = new File(fileDir, "todo.txt");
-        try {
-            items = new ArrayList<String>(FileUtils.readLines(file));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    private void readItems(Activity activity) {
+//        readItemsFromFile();
+        items = ToDoDatabaseHelper.getInstance(activity.getApplication()).getAllToDos();
+    }
+
+    private void deleteItem(Activity activity, String item) {
+        ToDoDatabaseHelper.getInstance(activity.getApplication()).deleteToDo(item);
+    }
+
+    private void addOrUpdateItem(Activity activity, String item) {
+        ToDoDatabaseHelper.getInstance(activity.getApplication()).addorUpdateToDo(item);
     }
 
     private void writeItems() {
@@ -106,6 +117,16 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(fileDir, "todo.txt");
         try {
             FileUtils.writeLines(file, items);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void readItemsFromFile() {
+        File fileDir = getFilesDir();
+        File file = new File(fileDir, "todo.txt");
+        try {
+            items = new ArrayList<String>(FileUtils.readLines(file));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -134,8 +155,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onAddItem(View view) {
-        itemsAdapter.add(etEditText.getText().toString());
+        String item = etEditText.getText().toString();
+        itemsAdapter.add(item);
         etEditText.setText("");
-        writeItems();
+//        writeItems();
+        addOrUpdateItem(this, item);
     }
+
 }
